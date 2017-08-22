@@ -8,7 +8,7 @@ var boardlist = '<div class=\'boardlist\'><span class=\'sub\' data-description=\
 
 /* Thread HTML */
 
-var header = '<img class=\'board_image\' src=\'img/banner.jpg\'><header><h1 id=\'heading\'></h1><div class=\'subtitle\'><p><a id=\'catalog-link\'>Catalog</a></p></div></header>';
+var header = '<img class=\'board_image\' src=\'img/banner.jpg\'><header><h1 id=\'heading\'></h1><div class=\'subtitle\'><p><a id=\'index-link\'>Index</a>&nbsp;&nbsp;<a id=\'catalog-link\'>Catalog</a></p></div></header>';
 
 var banner = '<div class=\'banner\'>Posting mode: Reply</div>';
 

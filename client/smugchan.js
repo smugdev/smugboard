@@ -268,9 +268,11 @@ function loadThread(address, sLog){
         if (fromIndex){
             document.getElementById('thread-return').setAttribute('href', functions.getNewHash(window.addressParsed, ['reply', 'post']));//TODO 'reply' is confusing now that there's also 'post', change it to 'thread' everywhere
             document.getElementById('catalog-link').setAttribute('href', functions.getNewHash(window.addressParsed, ['post', 'reply', 'catalog']) + '/catalog');
+            document.getElementById('index-link').setAttribute('href', functions.getNewHash(window.addressParsed, ['post', 'reply', 'catalog']));
         } else {
             document.getElementById('thread-return').parentNode.removeChild(document.getElementById('thread-return'));
             document.getElementById('catalog-link').parentNode.removeChild(document.getElementById('catalog-link'));
+            document.getElementById('index-link').parentNode.removeChild(document.getElementById('index-link'));
         }
         
         /*var cAddress = parseAddress(location.hash);//TODO: upgrade to new parse system
@@ -368,6 +370,7 @@ function loadIndex(address){
     if (!pageStatus[address].htmlLoaded){
         page.setIndexHTML();
         document.getElementById('catalog-link').setAttribute('href', functions.getNewHash(window.addressParsed, ['post', 'reply', 'catalog']) + '/catalog');
+        document.getElementById('index-link').setAttribute('href', functions.getNewHash(window.addressParsed, ['post', 'reply', 'catalog']));
         
         page.fillBoardlist(pageStatus);
         
@@ -433,6 +436,8 @@ function loadIndex(address){
 function loadCatalog(address){
     if (!pageStatus[address].htmlLoaded){
         page.setCatalogHTML();
+        document.getElementById('catalog-link').setAttribute('href', functions.getNewHash(window.addressParsed, ['post', 'reply', 'catalog']) + '/catalog');
+        document.getElementById('index-link').setAttribute('href', functions.getNewHash(window.addressParsed, ['post', 'reply', 'catalog']));
         
         page.fillBoardlist(pageStatus);
         

@@ -362,6 +362,7 @@ function setIndexHTML(){
 
     document.head.innerHTML = htmlHeadContent;
     document.body.innerHTML = htmlBodyContent;
+    document.getElementById('submit').innerHTML = 'New Thread';
 }
 
 function setCatalogHTML(){
@@ -377,6 +378,7 @@ function setCatalogHTML(){
     document.head.innerHTML = htmlHeadContent;
     document.body.innerHTML = htmlBodyContent;
     document.body.classList.value = 'theme-catalog active-catalog';
+    document.getElementById('submit').innerHTML = 'New Thread';
 }
 
 function getCatalogEmptyThread(){

@@ -26,7 +26,7 @@ module.exports = {
             "always"
         ],
         "eqeqeq": [
-            "error",
+            "warn",
             "smart"
         ],
         "no-console": [

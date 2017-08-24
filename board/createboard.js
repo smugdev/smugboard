@@ -2,16 +2,17 @@ var sio = require('../common/sio.js');
 var serverAddress = require('../common/settings.js').getAddress();
 var port = 3001;
 
-if (process.argv.length < 4){
-    console.log('node createboard.js [modaddress] [threadserveraddress]');
+if (process.argv.length < 5){
+    console.log('node createboard.js [modaddress] [threadserveraddress] [boardname]');
     process.exit();
 }
 
 var mods = [process.argv[2]];
 var threadServers = [process.argv[3]];
+var boardName = [process.argv[4]];
 
 sio.sendPost(serverAddress + ':' + port, {
-    title: 'Random',
+    title: boardName,
     mods: mods,
     banners: [],
     fileFormats: ['jpg', 'png', 'gif'],

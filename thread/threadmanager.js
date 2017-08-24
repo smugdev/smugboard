@@ -229,7 +229,7 @@ function handlePost(postRaw, filesInfo, thread, posterID){
         var post = buildPostJson(postRaw, files);
         
         if (filesInfo == null && (post.body == '' || post.body == null)) {
-            return;
+            //return;
         }
         
         if (post.email != 'sage' || globalStates[thread].lastbump == null) {
@@ -247,6 +247,8 @@ function handlePost(postRaw, filesInfo, thread, posterID){
     });
 }
 
+//this function is probably the biggest disaster of the project
+//ALL sending of direct messages via XHRs should be deprecated in favour of IPFS-based P2P
 function newThreadBridge(postRaw, filesInfo, res, posterID){
     return function(thread){
         //TODO send a message off to the board(s) this thread is to be attached to

@@ -419,8 +419,8 @@ function loadIndex(address){
             var threadContainerDiv = document.getElementById('thread');
             threadDiv = document.createElement('div');
             threadDiv.setAttribute('id', 'thread-' + item.data.address);
-            threadDiv.innerHTML = 'Loading...';
             threadDiv.appendChild(document.createElement('hr'));
+            threadDiv.appendChild(document.createTextNode('Loading...'));
             var index = Array.prototype.indexOf.call(threadContainerDiv.childNodes, anchor);
 
             //threadContainerDiv.insertBefore(, threadContainerDiv.childNodes[index]);

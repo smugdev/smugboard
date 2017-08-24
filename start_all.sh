@@ -3,7 +3,7 @@ echo $! > .ipfs/ipfs.pid
 cd nameserver
 node namemanager.js >> log.txt &
 echo $! > server.pid
-sleep 8s #TODO find a better way of working out when ipfs is all set up
+sleep 10s #TODO find a better way of working out when ipfs is all set up
 #echo "now starting other stuff"
 cd ../board
 node boardmanager.js >> log.txt &

@@ -32,7 +32,7 @@ var settings = {
     //mods: [],
     //title: "Test", // /thisstuff/ comes from the naming system above
     //banners: [],
-    fileFormats: ['jpg', 'png', 'gif'], //TODO if not [], should only approve formats that board and thread servers agree on
+    fileFormats: ['jpg', 'jpeg', 'png', 'gif'], //TODO if not [], should only approve formats that board and thread servers agree on
     //TODO max file size
 };
 

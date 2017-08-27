@@ -1,5 +1,5 @@
 # Smugboard
-An IPFS-based imageboard
+An IPFS-based imageboard.
 
 ## Prerequisites
 * Node

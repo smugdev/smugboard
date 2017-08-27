@@ -32,9 +32,11 @@ var settings = {
     //mods: [],
     //title: "Test", // /thisstuff/ comes from the naming system above
     //banners: [],
-    fileFormats: ['jpg', 'jpeg', 'png', 'gif'], //TODO if not [], should only approve formats that board and thread servers agree on
+    fileFormats: ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'ico', 'webm', 'mp4', 'mp3', 'ogg', 'flac', 'apng'], //TODO if not [], should only approve formats that board and thread servers agree on
     //TODO max file size
 };
+
+var previewable = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'ico'];//things image-size can deal with
 
 var globalStates = {};
 
@@ -155,19 +157,29 @@ function processFiles(filesInfo, callback){
                 sio.ipfsNameObject(fileObj, filesInfo.originalname, (filename) => {
                     //filenames.push(sio.ipfsNameObjectSync(fileObj.hash, filesInfo.originalname));
                     filenames.push(filename);
-                    //TODO thumbnail files
-                    //TODO make this async (done?)
-                    fileDims.push(imgDims(filesInfo.buffer));
                     fileSizes.push(filesInfo.size);
-                    console.log(filenames);
+                    //console.log(filenames);
                     //for each file
                     files.push({
+                        filename: filesInfo.originalname,
+                        extension: filenameSplit[filenameSplit.length - 1],
                         address: filenames[0],
-                        height: fileDims[0].height,
-                        width: fileDims[0].width,
+                        //height: fileDims[0].height,
+                        //width: fileDims[0].width,
                         size: fileSizes[0]
                     });
-                        
+                    
+                    //TODO thumbnail files (maybe? or maybe just have the client only download images above say ~1MB and have a generic thumbnail for the rest. or better yet give the user a slider for how big the files they want to auto-dl are)
+                    //TODO make this async (done?)
+                    if (previewable.indexOf(filenameSplit[filenameSplit.length - 1]) != -1) {
+                        fileDims.push(imgDims(filesInfo.buffer));
+                    }
+                    
+                    if (fileDims.length > 0){
+                        files[files.length - 1].height = fileDims[0].height;
+                        files[files.length - 1].width = fileDims[0].width;
+                    }
+                    
                     callback(files);
                 });
 

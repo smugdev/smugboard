@@ -5,6 +5,10 @@ var sio = require('../../common/sio_browser.js');
 var pageHtml = require('../../common/page_html.js');
 var threadServer = require('../../common/current_thread.js').serverAddress;
 
+//things embeddable in <img> tags
+//must only contain things that image-size is dealing with in threadmanager.js
+var browserDisplayableFormats = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'ico'];
+
 function decoratePostBody(bodyRaw, indexSeqNo){
     let singleMatch;
     let bodyPretty = bodyRaw + '';
@@ -120,7 +124,7 @@ function fillPost(postDiv, postJson, seqNo, timestamp, fromIndex, indexSeqNo, mo
     if (post.files != null && post.files.length > 0){
         postFiles.setAttribute('class', 'files');
         for (let file of post.files){
-            if (file.address != null && file.size != null && file.height != null && file.width != null){
+            if (file.address != null && file.size != null){
                 var fileDiv = document.createElement('div');
                 fileDiv.setAttribute('class', 'file');
                 var fileInfo = document.createElement('p');
@@ -133,25 +137,36 @@ function fillPost(postDiv, postJson, seqNo, timestamp, fromIndex, indexSeqNo, mo
                 
                 var fileDetails = document.createElement('span');
                 fileDetails.setAttribute('class', 'unimportant');
-                fileDetails.appendChild(document.createTextNode(' (' + (Math.round((parseFloat(file.size) / 1024.0) * 100)/100.0) + 'KiB, ' + file.width + 'x' + file.height + ')'));
-            
-                let maxDim = 255;
-                let imgWidth = parseInt(file.width);
-                let imgHeight = parseInt(file.height);
-                let longSide = imgHeight > imgWidth ? imgHeight : imgWidth;
-                
-                if (longSide > maxDim){
-                    let factor = longSide / maxDim;
-                    imgHeight /= factor;
-                    imgWidth /= factor;
+                let fileDims = '';
+                if (file.width != null && file.height != null){
+                    fileDims = ', ' + file.width + 'x' + file.height;
                 }
+                fileDetails.appendChild(document.createTextNode(' (' + (Math.round((parseFloat(file.size) / 1024.0) * 100)/100.0) + 'KiB' + fileDims + ')'));
                 
                 var fileImgLink = document.createElement('a');
                 fileImgLink.setAttribute('href', file.address);
                 var fileImg = document.createElement('img');
                 fileImg.setAttribute('class', 'post-image');
-                fileImg.setAttribute('src', file.address);
-                fileImg.setAttribute('style', 'width: ' + imgWidth + 'px; height: ' + imgHeight + 'px;');
+                
+                if (file.extension == null || browserDisplayableFormats.indexOf(file.extension) != -1){//TODO this is temporary so that I don't break the test board - should be changed (if the extension *IS* null, put just the link instead). should also check that file.height and file.width aren't null
+                    fileImg.setAttribute('src', file.address);
+                    
+                    let maxDim = 255;
+                    let imgWidth = parseInt(file.width);
+                    let imgHeight = parseInt(file.height);
+                    let longSide = imgHeight > imgWidth ? imgHeight : imgWidth;
+                    
+                    if (longSide > maxDim){
+                        let factor = longSide / maxDim;
+                        imgHeight /= factor;
+                        imgWidth /= factor;
+                    }
+                    
+                    fileImg.setAttribute('style', 'width: ' + imgWidth + 'px; height: ' + imgHeight + 'px;');
+                } else {
+                    fileImg.setAttribute('src', '/ipfs/QmSmVimunQTsmau3SH9ohESmzRNLCdXGjSHYpxvp9SeZp2');//TODO shouldn't have direct IPFS hashes in here
+                }
+                
                 
                 fileSpan.appendChild(fileLink);
                 fileSpan.appendChild(fileDetails);

@@ -8,7 +8,7 @@ var app = express();
 var multer  = require('multer');
 var upload = multer();
 
-var serverAddress = require('../common/settings.js').serverAddress;// sio.loadObject('../common/settings.json').serverAddress;
+var serverAddress = require('../common/settings.js').serverAddress;
 var port = 3003; //0 makes the program just pick something free
 
 var serverInfoGlobal = {
@@ -18,7 +18,7 @@ var serverInfoGlobal = {
 
 var globalStates = {};
 
-var globalBindings = {'smugch.an': 'QmLocalIPFSNode'}; //for telling the server that some domain name corresponds to some ipns address
+var globalBindings = {'client.smugchan.org': 'QmLocalIPFSNode'}; //for telling the server that some domain name corresponds to some ipns address
 
 var reservedNames = ['ipns', 'ipfs', 'dns', 'api'];
 
@@ -55,24 +55,6 @@ function admin(postRaw, res){
             title: postRaw.title,
             banners: slog.ensureAllHashesIpns(util.parseSettingToArr(postRaw.banners))
         };
-        
-        console.log(settings);
-        
-        /*util.createSettings(settings, function(settingsPubkey){
-            var board = {
-//                title: postRaw.title,
-                lastAddress: null,
-                lastSeqNo: 0,
-                mode: "index",
-                settings: '/ipns/' + settingsPubkey,
-                server: serverInfoGlobal.server,
-                keyFile: null
-            };
-            
-            util.addNewState(board, globalStates, globalSLogs, true, true, blankEntry, function(pubkey){
-                res.send('/ipns/' + pubkey);
-            });
-        });*/
         
         util.createSettings(settings, function(settingsPubkey){
             var site = {
@@ -150,17 +132,7 @@ function setupServer(){
     });
     
     util.republishAllSettings();
-    /*    var site = {
-        title: "Smugchan",
-        lastAddress: null,
-        lastSeqNo: 0,
-        mode: "site",
-        settings: null,//TODO
-        server: serverInfoGlobal.server,
-        keyFile: null
-    };
-    
-    util.addNewState(site, globalStates, globalSLogs, serverInfoGlobal.useKeyFile, true, blankEntry);*/
+
     
     console.log('Now listening on ' + serverInfoGlobal.server);
 }

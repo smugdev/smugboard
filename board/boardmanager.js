@@ -82,22 +82,6 @@ function admin(postRaw, res){
                 res.send('/ipns/' + pubkey);
             });
         });
-        
-        /*sio.ipfsAdd(settings, function(settingsAddress){
-            var board = {
-//                title: postRaw.title,
-                lastAddress: null,
-                lastSeqNo: 0,
-                mode: "index",
-                settings: settingsAddress,
-                server: serverInfoGlobal.server,
-                keyFile: null
-            };
-            
-            util.addNewState(board, globalStates, globalSLogs, true, true, blankEntry, function(pubkey){
-                res.send('/ipns/' + pubkey);
-            });
-        });*/
     }    
 }
 
@@ -180,19 +164,7 @@ function setupServer(){
     
     //util.republishAllSettings();
     
-    /*var board = {
-        title: "/test/ - My Shitpoos",
-        lastAddress: null,
-        lastSeqNo: 0,
-        mode: "index",
-        settings: serverInfoGlobal.settings,
-        server: serverInfoGlobal.server,
-        keyFile: null
-    };
-    
-    util.addNewState(board, globalStates, globalSLogs, serverInfoGlobal.useKeyFile, true, blankEntry);*/
-    
-    //createNewBoard(serverInfoGlobal.server, serverInfoGlobal.useKeyFile);
+
     
     pruner();
     

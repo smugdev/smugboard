@@ -16,7 +16,6 @@ function decoratePostBody(bodyRaw, indexSeqNo){
     bodyPretty = bodyPretty.replace(/\&/g, '&amp;');
     bodyPretty = bodyPretty.replace(/</g, '&lt;');
     bodyPretty = bodyPretty.replace(/>/g, '&gt;');
-    //bodyPretty = bodyPretty.replace(/(>.*)(\r\n|$)/g, "<span style='color:#789922'>$1</span>$2");
     bodyPretty = bodyPretty.replace(/(&gt;.*)(\r|\n|$)/g, '<span style=\'color:#789922\'>$1</span>$2');
     
     //TODO strikethrough
@@ -25,13 +24,7 @@ function decoratePostBody(bodyRaw, indexSeqNo){
     bodyPretty = bodyPretty.replace(/'''(.*)'''/g, '<strong>$1</strong>');
     bodyPretty = bodyPretty.replace(/''(.*)''/g, '<em>$1</em>');
     
-    let modes;    //(?:[^a-g])m //Every m not followed by a-g
-    //TODO these overwrite each other, work out how to do lookbehinds and make sure the pattern doesn't have a preceding '>'
-    //alternatively, extend this to be able to handle variable-length addresses (going up one level each '>')
-    //better/easier idea: check if the next character is a '/'
-    //ooh, ooh, i think / counts as a \b
-    //fuck it, just use '>'s for the replacement
-    modes = ['site', 'index', 'reply', 'post'];
+    let modes = ['site', 'index', 'reply', 'post'];
     bodyPretty = bodyPretty.replace(/&gt;&gt;&gt;&gt;&gt;\/([a-z0-9][a-z0-9]*)\/([a-z0-9][a-z0-9]*)\/(\d+)\/(\d+)/g, '<a href=\'' + functions.getNewHash(window.addressParsed, modes, indexSeqNo) + '/$1/$2/$3/$4\'>>>>>>/$1/$2/$3/$4</a>');
     modes = ['index', 'reply', 'post'];
     bodyPretty = bodyPretty.replace(/&gt;&gt;&gt;&gt;\/([a-z0-9][a-z0-9]*)\/(\d+)\/(\d+)/g, '<a href=\'' + functions.getNewHash(window.addressParsed, modes, indexSeqNo) + '/$1/$2/$3\'>>>>>/$1/$2/$3</a>');
@@ -40,11 +33,6 @@ function decoratePostBody(bodyRaw, indexSeqNo){
     modes = ['post'];
     bodyPretty = bodyPretty.replace(/&gt;&gt;(\d+)/g, '<a class=\'inthreadlink\' href=\'' + functions.getNewHash(window.addressParsed, modes, indexSeqNo) + '/$1\'>>>$1</a>');//TODO remove class
     
-    
-    /*while (singleMatch = pattern.exec(bodyPretty))
-        //TODO learn how to into regex to do links and backlinks and stuff
-        console.log(singleMatch.index + ' ' + pattern.lastIndex);*/
-    //    bodyPretty.replace(, "<a href=''></a>");
     return bodyPretty;
 }
 
@@ -520,16 +508,6 @@ function fillBoardlistTable(pageStatus){
                         });
                     }
                 });
-                
-                /*slog.getSLog(item.data.address, 0, null, function(indexSLog){
-                    if (indexSLog != null && indexSLog.length > 0 && indexSLog[0].settings != null){
-                        slog.getSLog(indexSLog[0].settings, 0, null, function(settingsSLog){
-                            if (settingsSLog != null && settingsSLog.length > 0 && settingsSLog[0].title != null){
-                                title.appendChild(document.createTextNode(settingsSLog[0].title));
-                            }
-                        });
-                    }
-                });*/
                 
                 let link = document.createElement('a');
                 link.setAttribute('href', '#' + sitePublicAddress + '/' + item.data.uri);

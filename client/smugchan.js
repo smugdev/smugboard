@@ -890,13 +890,7 @@ function loadPage(){
             }
         }
         
-        /*var cAddress = parseAddress(location.hash);
-        if (cAddress.single != null){
-            processPage(cAddress.single, handlePage(cAddress.single));
-        } else {
-            processPage('/ipns/' + cAddress.site, onPageLoad('/ipns/' + cAddress.site, cAddress, 0));
-            //loadComplexAddress(cAddress);
-        }*/
+
     }
 }
 
@@ -929,118 +923,5 @@ document.addEventListener('DOMContentLoaded', function() {
 
 window.addEventListener('hashchange', loadPage, false);//TODO handle case where you change thread in the middle of a refresh
 
-/*function onIndexLoad(cAddress, indexAddress){
-    return function (sLog){
-        if (pageStatus[indexAddress] == null)
-            pageStatus[indexAddress] = newPageStatus();//TODO this logic is getting repeated elsewhere
-        
-        if (sLog.length > 0){
-            pageStatus[indexAddress].sLog = sLog;
-            //pageStatus[indexAddress].server = sLog[sLog.length - 1].server;
-            ///sio.loadJsonObj(pageStatus[indexAddress].sLog[sLog.length - 1].settings, handleIndexSettings(indexAddress, function (){
-                //TODO TODO TODO this has now been tied to loading the server, this is completely wrong
-                //TODO this is a messy place to handle the mods
-                for (let item of currentMods){
-                    loadingMods++;
-                    slog.getSLog(item, -1, null, function(modSLog){
-                        modSLogs[item] = modSLog;
-                        loadingMods--;
-                    }, null);
-                }
-                
-                if (cAddress.thread == null){//TODO maybe we only want to load the index, should be able to stop here
-                    handlePage(indexAddress)(sLog);
-                } else {
-                    var payloads = slog.calculateSLogPayloads(sLog);
-                    
-                    var threadAddress = null;
-                    for (let item of payloads){
-                        if (item.seqNo == cAddress.thread){
-                            threadAddress = item.data.address;
-                            break;
-                        }
-                    }
-                    
-                    if (threadAddress == null)
-                        document.body.innerHTML = 'Thread not found.';
-                    else
-                        processPage(threadAddress, handlePage(threadAddress));
-                }
-            //}));
-        }
-    }
-}
 
-function onSiteLoad(cAddress){
-    return function (sLog){
-        //if (pageStatus['/ipns/' + cAddress.site] == null)
-        //    pageStatus['/ipns/' + cAddress.site] = newPageStatus();
-            
-        if (sLog.length > 0){
-            //pageStatus['/ipns/' + cAddress.site].sLog = sLog;
-            //pageStatus['/ipns/' + cAddress.site].server = sLog[sLog.length - 1].server;
-            
-            if (cAddress.index == null){//TODO maybe we only want to load the site root, should be able to stop here
-                handlePage('/ipns/' + cAddress.site)(sLog);
-            } else {
-                var payloads = slog.calculateSLogPayloads(sLog);
-            
-                var indexAddress = null;
-                for (let item of payloads){
-                    if (item.data.uri == cAddress.index || item.seqNo == cAddress.index){
-                        indexAddress = item.data.address;
-                        break;
-                    }
-                }
-                if (indexAddress == null){
-                    document.body.innerHTML = 'Board not found.';
-                } else {
-                    processPage(indexAddress, onIndexLoad(cAddress, indexAddress));
-                }
-            }
-            
-        }
-    }
-}*/
 
-/*function loadComplexAddress(cAddress){
-    if (cAddress.site != null)
-        processPage('/ipns/' + cAddress.site, onPageLoad('/ipns/' + cAddress.site, cAddress));
-    else
-        console.log('Malformed URL');
-}*/
-
-/*function parseAddress(windowAddress){//TODO move to a shared location
-    windowAddress = windowAddress.replace(/^#/, '');
-    var addressInternals = {
-        site: null,
-        index: null,
-        thread: null,
-        post: null,
-        single: null //can load thread at #[mysite]/[myindex]/[mythread], OR at #/ipns/[myhash]
-    };
-    
-    addressArr = windowAddress.split('/');
-    
-    if (addressArr.length > 0){
-        if (addressArr[0] == ''){
-            addressInternals.single = '/' + addressArr[1] + '/' + addressArr[2];
-            if (addressArr.length > 3){
-                addressInternals.post = addressArr[3];
-            }
-        } else {
-            addressInternals.site = addressArr[0];
-            if (addressArr.length > 1){
-                addressInternals.index = addressArr[1];
-                if (addressArr.length > 2){
-                    addressInternals.thread = addressArr[2];
-                    if (addressArr.length > 3){
-                        addressInternals.post = addressArr[3];
-                    }
-                }
-            }
-        }
-    }
-    
-    return addressInternals;
-}*/

@@ -163,7 +163,7 @@ function setupServer(){
     //sio.ipfsPublish(sio.ipfsAddSync(blankEntry(serverInfoGlobal)), serverInfoGlobal.keyFile);
     
     sio.loadAll(globalStates, 'states', function(){
-        util.publishWithServer(globalStates, serverInfoGlobal.server, blankEntry);
+        //util.publishWithServer(globalStates, serverInfoGlobal.server, blankEntry);
         /*for (let item in globalStates){
             //console.log(item);
             if (globalStates.hasOwnProperty(item)){

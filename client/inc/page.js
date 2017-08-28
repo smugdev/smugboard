@@ -237,10 +237,14 @@ function fillCatalogPost(postDiv, postJson, seqNo, timestamp, fromIndex, indexSe
     
     var imageLink = document.createElement('a');
     if (post.files != null && post.files.length > 0){
-        if (post.files[0].address != null && post.files[0].size != null && post.files[0].height != null && post.files[0].width != null){
+        if (post.files[0].address != null && post.files[0].size != null){
             imageLink.setAttribute('href', functions.getNewHash(window.addressParsed, ['post', 'reply', 'catalog'], indexSeqNo));
             var fileImg = document.createElement('img');
-            fileImg.setAttribute('src', post.files[0].address);
+            if (browserDisplayableFormats.indexOf(post.files[0].extension) != -1) {
+                fileImg.setAttribute('src', post.files[0].address);
+            } else {
+                fileImg.setAttribute('src', '/ipfs/QmSmVimunQTsmau3SH9ohESmzRNLCdXGjSHYpxvp9SeZp2');
+            }
             fileImg.setAttribute('class', 'thread-image');
             imageLink.appendChild(fileImg);
         }

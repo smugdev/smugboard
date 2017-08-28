@@ -146,7 +146,7 @@ function setupServer(){
     serverInfoGlobal.server = serverAddress + ':' + listener.address().port;
     
     sio.loadAll(globalStates, 'states', function(){
-        util.publishWithServer(globalStates, serverInfoGlobal.server, blankEntry);
+        //util.publishWithServer(globalStates, serverInfoGlobal.server, blankEntry);
     });
     
     util.republishAllSettings();

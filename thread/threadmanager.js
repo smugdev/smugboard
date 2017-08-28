@@ -172,7 +172,12 @@ function processFiles(filesInfo, callback){
                     //TODO thumbnail files (maybe? or maybe just have the client only download images above say ~1MB and have a generic thumbnail for the rest. or better yet give the user a slider for how big the files they want to auto-dl are)
                     //TODO make this async (done?)
                     if (previewable.indexOf(filenameSplit[filenameSplit.length - 1]) != -1) {
-                        fileDims.push(imgDims(filesInfo.buffer));
+                        try {
+                            fileDims.push(imgDims(filesInfo.buffer));
+                        } catch (err){
+                            console.log('Getting image dims failed.');
+                            console.log(filesInfo);
+                        }
                     }
                     
                     if (fileDims.length > 0){
@@ -365,7 +370,7 @@ function setupServer(){
             //sio.saveObject("serverkey", globalStates[Object.keys(globalStates)[0]].pubKey);
             //});//TODO this breaks everything when changing IPs for some reason
         } else {
-            util.publishWithServer(globalStates, serverInfoGlobal.server, blankEntry);
+            //util.publishWithServer(globalStates, serverInfoGlobal.server, blankEntry);
             //sio.saveObject("serverkey", globalStates[Object.keys(globalStates)[0]].pubKey);
         }
     });

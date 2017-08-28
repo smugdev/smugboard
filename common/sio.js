@@ -11,7 +11,8 @@ var slog = require('../common/slog.js');
 
 var nameServers = [];
 //nameServers.push('http://localhost:3005');
-nameServers.push(require('./settings.js').getAddress() + ':3005');
+nameServers.push(require('./settings.js').serverAddress + ':3005');
+var sitePassword = require('../common/settings.js').password;
 //var serverAddress = sio.loadObject('settings.json').serverAddress;//TODO sio_browser can't do this, switch to the settings.js thing
 
 //TODO swap to actual api
@@ -431,7 +432,8 @@ function ipfsPublish(address, keyName, pubkey){
             }//keyFile.split('/')[1].split('.')[0];
             var jsonObj = {
                 address: nameAddress,
-                association: address
+                association: address,
+                password: sitePassword
             };
             sendPost(server, jsonObj);
         }

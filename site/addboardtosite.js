@@ -1,5 +1,5 @@
 var sio = require('../common/sio.js');
-var serverAddress = require('../common/settings.js').getAddress();
+var serverAddress = require('../common/settings.js').serverAddress;
 var port = 3003;
 
 if (process.argv.length < 5){

@@ -8,7 +8,7 @@ var app = express();
 var multer  = require('multer');
 var upload = multer();
 
-var serverAddress = require('../common/settings.js').getAddress();// sio.loadObject('../common/settings.json').serverAddress;
+var serverAddress = require('../common/settings.js').serverAddress;// sio.loadObject('../common/settings.json').serverAddress;
 var port = 3003; //0 makes the program just pick something free
 
 var serverInfoGlobal = {

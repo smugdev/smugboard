@@ -3,7 +3,7 @@ var xhr = require('xhr');
 //var nameServers = ['http://localhost:3005'];//TODO handle more than one of these
 var nameServers = [];
 //nameServers.push('http://localhost:3005');
-nameServers.push(require('./settings.js').getAddress() + ':3005');
+nameServers.push(require('./settings.js').serverAddress + ':3005');
 
 var slog = require('../common/slog.js');
 var ipfsAPI = require('ipfs-api');

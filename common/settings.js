@@ -1,8 +1,3 @@
-var serverAddress = 'http://localhost';
+module.exports.serverAddress = 'http://localhost';
+module.exports.password = 'myverysecurepassword';
 
-function getAddress(){
-    return serverAddress;
-}
-
-module.exports.serverAddress = serverAddress;
-module.exports.getAddress = getAddress;

@@ -18,7 +18,7 @@ var upload = multer({ storage: storage });
 //var ReadWriteLock = require('rwlock');
 //var lock = new ReadWriteLock();
 
-var serverAddress = require('../common/settings.js').getAddress();//sio.loadObject('../common/settings.json').serverAddress;
+var serverAddress = require('../common/settings.js').serverAddress;//sio.loadObject('../common/settings.json').serverAddress;
 var port = 3000; //0 makes the program just pick something free
 
 var serverInfoGlobal = {

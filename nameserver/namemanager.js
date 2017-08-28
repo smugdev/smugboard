@@ -12,23 +12,28 @@ var app = express();
 
 app.use(cors());
 
+var sitePassword = require('../common/settings.js').password;
 var port = 3005; //0 makes the program just pick something free
 
 var bindings;
 
-app.post('/', upload.fields([]), function (req, res) {//TODO need some authentication here //TODO get rid of the damn file uploads
+app.post('/', upload.fields([]), function (req, res) {//TODO get rid of the damn file uploads
     console.log('POST received: ' + JSON.stringify(req.body));
     
     if (req.body != null){
-        if (req.body.address != null && req.body.association != null){
-            bindings[req.body.address] = req.body.association;
-            sio.saveObjectAsync('bindings.json', bindings);
-            res.send('Name successfully registered.');
+        if (req.body.address != null && req.body.association != null && req.body.password != null){
+            if (req.body.password == sitePassword){
+                bindings[req.body.address] = req.body.association;
+                sio.saveObjectAsync('bindings.json', bindings);
+                res.send('Name successfully registered.');
+            } else {
+                res.status(400).send('Wrong password.');
+            }
         } else {
-            res.status(400).send('Malformed POST (wrong fields)');
+            res.status(400).send('Malformed POST (wrong fields).');
         }
     } else {
-        res.status(400).send('Malformed POST (missing body)');
+        res.status(400).send('Malformed POST (missing body).');
     }
 });
 

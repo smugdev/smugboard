@@ -6,7 +6,7 @@ var refresh = require('./inc/refresh.js');
 var post = require('./inc/post.js');
 var functions = require('./inc/functions.js');
 var queue = require('./inc/queue.js');
-var serverAddress = require('../common/settings.js').getAddress();
+var serverAddress = require('../common/settings.js').serverAddress;
 
 var pageStatus = {};
 //var collectedServers = {};

@@ -11,7 +11,7 @@ var upload = multer({ dest: '/tmp' });
 
 app.use(cors());
 
-var serverAddress = require('../common/settings.js').getAddress();//sio.loadObject('../common/settings.json').serverAddress;
+var serverAddress = require('../common/settings.js').serverAddress;//sio.loadObject('../common/settings.json').serverAddress;
 var port = 3004; //0 makes the program just pick something free
 
 var serverInfoGlobal = {

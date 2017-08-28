@@ -32,7 +32,7 @@ var settings = {
     //mods: [],
     //title: "Test", // /thisstuff/ comes from the naming system above
     //banners: [],
-    fileFormats: ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'ico', 'webm', 'mp4', 'mp3', 'ogg', 'flac', 'apng'], //TODO if not [], should only approve formats that board and thread servers agree on
+    fileFormats: ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'ico', 'webm', 'mp4', 'mp3', 'ogg', 'flac', 'apng', 'pdf', 'iso', 'zip', 'tar', 'gz', 'rar', '7z', 'torrent'], //TODO if not [], should only approve formats that board and thread servers agree on
     //TODO max file size
 };
 

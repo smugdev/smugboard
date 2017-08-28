@@ -15,7 +15,7 @@ sio.sendPost(serverAddress + ':' + port, {
     title: boardName,
     mods: mods,
     banners: [],
-    fileFormats: ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'ico', 'webm', 'mp4', 'mp3', 'ogg', 'flac', 'apng'],
+    fileFormats: ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'ico', 'webm', 'mp4', 'mp3', 'ogg', 'flac', 'apng', 'pdf', 'iso', 'zip', 'tar', 'gz', 'rar', '7z', 'torrent'],
     threadServers: threadServers,
     admin: 'true',
     operation: 'new'

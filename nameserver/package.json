@@ -1,6 +1,6 @@
 {
   "name": "namemanager",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "",
   "main": "namemanager.js",
   "scripts": {
@@ -11,7 +11,6 @@
   "dependencies": {
     "cors": "^2.8.0",
     "express": "~4.14.0",
-    "multer": "^1.1.0",
-    "pem": "^1.8.3"
+    "multer": "^1.1.0"
   }
 }

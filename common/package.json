@@ -1,23 +1,21 @@
 {
   "name": "common",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "",
-  "main": "slog.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "browser": {
-    "./sio.js": "./sio_browser.js"
+    "request": "xhr",
+    "image-size": "xhr",
+    "./storage.js": "./storagebrowser.js"
   },
-  "author": "",
-  "license": "BSD-2-Clause",
+  "author": "smugdev",
+  "license": "MIT",
   "dependencies": {
-    "http-post": "^0.1.1",
-    "ipfs-api": "^14.1.2",
-    "mkdirp": "^0.5.1",
-    "mv": "^2.1.1",
-    "request": "^2.72.0",
-    "tmp": "0.0.28",
-    "xhr": "^2.2.0"
+    "image-size": "^0.6.1",
+    "ipfs-api": "^14.3.5",
+    "request": "^2.81.0",
+    "xhr": "^2.4.0"
   }
 }

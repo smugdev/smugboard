@@ -1,19 +1,14 @@
+var pageHtml = require('./page_html.js');
 var functions = require('./functions.js');
+var wrapperFuncs = require('../../common/wrapperfuncs.js');
 var slog = require('../../common/slog.js');
-//var sio = require('../../common/sio.js'); TODO this should automatically work
-var sio = require('../../common/sio_browser.js');
-var pageHtml = require('../../common/page_html.js');
-var threadServer = require('../../common/current_thread.js').serverAddress;
 
-//things embeddable in <img> tags
-//must only contain things that image-size is dealing with in threadmanager.js
 var browserDisplayableFormats = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'ico'];
 
-function decoratePostBody(bodyRaw, indexSeqNo){
-    let singleMatch;
+function decoratePostBody(bodyRaw, indexSeqno, addressObj){
     let bodyPretty = bodyRaw + '';
     
-    bodyPretty = bodyPretty.replace(/\&/g, '&amp;');
+    bodyPretty = bodyPretty.replace(/&/g, '&amp;');
     bodyPretty = bodyPretty.replace(/</g, '&lt;');
     bodyPretty = bodyPretty.replace(/>/g, '&gt;');
     bodyPretty = bodyPretty.replace(/(&gt;.*)(\r|\n|$)/g, '<span style=\'color:#789922\'>$1</span>$2');
@@ -24,14 +19,14 @@ function decoratePostBody(bodyRaw, indexSeqNo){
     bodyPretty = bodyPretty.replace(/'''(.*)'''/g, '<strong>$1</strong>');
     bodyPretty = bodyPretty.replace(/''(.*)''/g, '<em>$1</em>');
     
-    let modes = ['site', 'index', 'reply', 'post'];
-    bodyPretty = bodyPretty.replace(/&gt;&gt;&gt;&gt;&gt;\/([a-z0-9][a-z0-9]*)\/([a-z0-9][a-z0-9]*)\/(\d+)\/(\d+)/g, '<a href=\'' + functions.getNewHash(window.addressParsed, modes, indexSeqNo) + '/$1/$2/$3/$4\'>>>>>>/$1/$2/$3/$4</a>');
-    modes = ['index', 'reply', 'post'];
-    bodyPretty = bodyPretty.replace(/&gt;&gt;&gt;&gt;\/([a-z0-9][a-z0-9]*)\/(\d+)\/(\d+)/g, '<a href=\'' + functions.getNewHash(window.addressParsed, modes, indexSeqNo) + '/$1/$2/$3\'>>>>>/$1/$2/$3</a>');
-    modes = ['reply', 'post'];
-    bodyPretty = bodyPretty.replace(/&gt;&gt;&gt;\/(\d+)\/(\d+)/g, '<a href=\'' + functions.getNewHash(window.addressParsed, modes, indexSeqNo) + '/$1/$2\'>>>>/$1/$2</a>');//TODO i think you could break this by putting a '$' in the url hash
+    let modes = ['site', 'board', 'thread', 'post'];
+    bodyPretty = bodyPretty.replace(/&gt;&gt;&gt;&gt;&gt;\/([a-z0-9][a-z0-9]*)\/([a-z0-9][a-z0-9]*)\/(\d+)\/(\d+)/g, '<a href=\'' + functions.getNewHash(addressObj, modes, [indexSeqno]) + '/$1/$2/$3/$4\'>>>>>>/$1/$2/$3/$4</a>');
+    modes = ['board', 'thread', 'post'];
+    bodyPretty = bodyPretty.replace(/&gt;&gt;&gt;&gt;\/([a-z0-9][a-z0-9]*)\/(\d+)\/(\d+)/g, '<a href=\'' + functions.getNewHash(addressObj, modes, [indexSeqno]) + '/$1/$2/$3\'>>>>>/$1/$2/$3</a>');
+    modes = ['thread', 'post'];
+    bodyPretty = bodyPretty.replace(/&gt;&gt;&gt;\/(\d+)\/(\d+)/g, '<a href=\'' + functions.getNewHash(addressObj, modes, [indexSeqno]) + '/$1/$2\'>>>>/$1/$2</a>');//TODO i think you could break this by putting a '$' in the url hash
     modes = ['post'];
-    bodyPretty = bodyPretty.replace(/&gt;&gt;(\d+)/g, '<a class=\'inthreadlink\' href=\'' + functions.getNewHash(window.addressParsed, modes, indexSeqNo) + '/$1\'>>>$1</a>');//TODO remove class
+    bodyPretty = bodyPretty.replace(/&gt;&gt;(\d+)/g, '<a class=\'inthreadlink\' href=\'' + functions.getNewHash(addressObj, modes) + '/$1\'>>>$1</a>');//TODO remove class
     
     return bodyPretty;
 }
@@ -40,10 +35,10 @@ function pad(n) {
     return (n < 10) ? ('0' + n) : n;
 }
 
-function fillPost(postDiv, postJson, seqNo, timestamp, fromIndex, indexSeqNo, mod, flagged){
-    var post = JSON.parse(postJson);
+function fillPost(postDiv, post, seqno, timestamp, addressObj, viewingFromIndex, indexSeqno, mod, flagged){
+    //var post = JSON.parse(postJson);
     
-    if (seqNo == '1'){
+    if (seqno === 1){
         postDiv.setAttribute('class', 'post op');
     } else {
         postDiv.setAttribute('class', 'post reply');
@@ -52,24 +47,32 @@ function fillPost(postDiv, postJson, seqNo, timestamp, fromIndex, indexSeqNo, mo
     if (flagged) {
         postDiv.setAttribute('class', postDiv.getAttribute('class') + ' flagged');
     }
+    
+    let extras = [];
+    if (indexSeqno) {
+        extras.push(indexSeqno);
+    }
+    extras.push(seqno);
+    let postFullLink = document.createElement('div');
+    postFullLink.setAttribute('id', functions.getNewHash(addressObj, ['post'], extras));
 
-    var postIntro = document.createElement('p');
+    let postIntro = document.createElement('p');
     postIntro.setAttribute('class', 'intro');
     
-    if (post.subject != null && post.subject != ''){
-        var subjectSpan = document.createElement('span');
+    if (post.subject != null && post.subject !== ''){
+        let subjectSpan = document.createElement('span');
         subjectSpan.setAttribute('class', 'subject');
         subjectSpan.appendChild(document.createTextNode(post.subject));
         postIntro.appendChild(subjectSpan);
     } else {
-        var subjectSpan = document.createElement('span');
+        let subjectSpan = document.createElement('span');
         subjectSpan.setAttribute('class', 'blanksubject');
         postIntro.appendChild(subjectSpan);
     }
     
     if (post.author != null){
-        var nameSpan;
-        if (post.email != null && post.email != ''){
+        let nameSpan;
+        if (post.email != null && post.email !== ''){
             nameSpan = document.createElement('a');
             nameSpan.setAttribute('class', 'email');
             nameSpan.setAttribute('href', 'mailto:' + post.email);
@@ -82,48 +85,48 @@ function fillPost(postDiv, postJson, seqNo, timestamp, fromIndex, indexSeqNo, mo
     }
     
     if (timestamp != null){
-        var date = new Date(timestamp);
-        var timeString = date.getFullYear() + '-' + pad(date.getMonth()+1) + '-' + pad(date.getDate()) + ' ' + pad(date.getHours()) + ':' + pad(date.getMinutes()) + ':' + pad(date.getSeconds());
-        var dateSpan = document.createElement('span');
+        let date = new Date(timestamp);
+        let timeString = date.getFullYear() + '-' + pad(date.getMonth()+1) + '-' + pad(date.getDate()) + ' ' + pad(date.getHours()) + ':' + pad(date.getMinutes()) + ':' + pad(date.getSeconds());
+        let dateSpan = document.createElement('span');
         dateSpan.setAttribute('class', 'time');
         dateSpan.appendChild(document.createTextNode(timeString));
         postIntro.appendChild(dateSpan);
     }
     
-    if (seqNo != null){
-        var postNum = document.createElement('a');
-        postNum.setAttribute('id', '' + seqNo);
+    if (seqno != null){
+        let postNum = document.createElement('a');
+        postNum.setAttribute('id', '' + seqno);
         postNum.setAttribute('class', 'post_no');
-        postNum.setAttribute('href', '#' + postDiv.id);
+        postNum.setAttribute('href', functions.getNewHash(addressObj, ['post'], extras));
         postNum.appendChild(document.createTextNode('No. '));
         postIntro.appendChild(postNum);
-        postIntro.appendChild(document.createTextNode(seqNo));
+        postIntro.appendChild(document.createTextNode(seqno));
     }
     
-    if (fromIndex && seqNo == '1' && indexSeqNo != null){
-        var replyLink = document.createElement('a');
+    if (viewingFromIndex && seqno === 1 && indexSeqno != null){
+        let replyLink = document.createElement('a');
         replyLink.setAttribute('class', 'reply_link');
-        replyLink.setAttribute('href', functions.getNewHash(window.addressParsed, ['post', 'reply'], indexSeqNo));//location.hash + '/' + indexSeqNo);//postDiv.getAttribute('data-thread'));//TODO this should be able to handle detached threads
+        replyLink.setAttribute('href', functions.getNewHash(addressObj, ['post', 'thread'], [indexSeqno]));//location.hash + '/' + indexSeqno);//postDiv.getAttribute('data-thread'));//TODO this should be able to handle detached threads
         replyLink.appendChild(document.createTextNode('[Reply]'));
         postIntro.appendChild(replyLink);
     }
 
-    var postFiles = document.createElement('div');
+    let postFiles = document.createElement('div');
     if (post.files != null && post.files.length > 0){
         postFiles.setAttribute('class', 'files');
         for (let file of post.files){
             if (file.address != null && file.size != null){
-                var fileDiv = document.createElement('div');
+                let fileDiv = document.createElement('div');
                 fileDiv.setAttribute('class', 'file');
-                var fileInfo = document.createElement('p');
+                let fileInfo = document.createElement('p');
                 fileInfo.setAttribute('class', 'fileinfo');
-                var fileSpan = document.createElement('span');
+                let fileSpan = document.createElement('span');
                 fileSpan.appendChild(document.createTextNode('File: '));
-                var fileLink = document.createElement('a');
+                let fileLink = document.createElement('a');
                 fileLink.setAttribute('href', file.address);
-                fileLink.appendChild(document.createTextNode(slog.lastItemFromAddress(file.address)));
+                fileLink.appendChild(document.createTextNode(file.filename));
                 
-                var fileDetails = document.createElement('span');
+                let fileDetails = document.createElement('span');
                 fileDetails.setAttribute('class', 'unimportant');
                 let fileDims = '';
                 if (file.width != null && file.height != null){
@@ -131,12 +134,12 @@ function fillPost(postDiv, postJson, seqNo, timestamp, fromIndex, indexSeqNo, mo
                 }
                 fileDetails.appendChild(document.createTextNode(' (' + (Math.round((parseFloat(file.size) / 1024.0) * 100)/100.0) + 'KiB' + fileDims + ')'));
                 
-                var fileImgLink = document.createElement('a');
+                let fileImgLink = document.createElement('a');
                 fileImgLink.setAttribute('href', file.address);
-                var fileImg = document.createElement('img');
+                let fileImg = document.createElement('img');
                 fileImg.setAttribute('class', 'post-image');
                 
-                if (file.extension == null || browserDisplayableFormats.indexOf(file.extension) != -1){//TODO this is temporary so that I don't break the test board - should be changed (if the extension *IS* null, put just the link instead). should also check that file.height and file.width aren't null
+                if (file.extension != null && browserDisplayableFormats.indexOf(file.extension) !== -1 && file.height != null && file.width != null){
                     fileImg.setAttribute('src', file.address);
                     
                     let maxDim = 255;
@@ -168,31 +171,31 @@ function fillPost(postDiv, postJson, seqNo, timestamp, fromIndex, indexSeqNo, mo
         }
     }
 
-    var modControls = document.createElement('span');
-    if (mod != null){
+    let modControls = document.createElement('span');
+    if (mod){
         modControls.setAttribute('class', 'controls');
-        var modDelete = document.createElement('a');
+        let modDelete = document.createElement('a');
         modDelete.setAttribute('href', '#');
         if (flagged){
-            modDelete.setAttribute('onclick', 'return smug.modOperation("undelete", "' + mod + '", "' + postDiv.getAttribute('data-thread') + '", "' + seqNo + '", smug.refreshPage)');
+            modDelete.setAttribute('onclick', 'return smug.modOperation("undelete", "' + mod + '", "' + postDiv.getAttribute('data-thread') + '", "' + seqno + '", smug.refreshPage)');
             modDelete.innerHTML = '[-D]';
         } else {
-            modDelete.setAttribute('onclick', 'return smug.modOperation("delete", "' + mod + '", "' + postDiv.getAttribute('data-thread') + '", "' + seqNo + '", smug.refreshPage)');
+            modDelete.setAttribute('onclick', 'return smug.modOperation("delete", "' + mod + '", "' + postDiv.getAttribute('data-thread') + '", "' + seqno + '", smug.refreshPage)');
             modDelete.innerHTML = '[D]';
         }
-        var modDeleteAll = document.createElement('a');
+        let modDeleteAll = document.createElement('a');
         modDeleteAll.setAttribute('href', '#');
-        modDeleteAll.setAttribute('onclick', 'return smug.modOperation("deleteall", "' + mod + '", "' + postDiv.getAttribute('data-thread') + '", "' + seqNo + '", smug.refreshPage)');
+        modDeleteAll.setAttribute('onclick', 'return smug.modOperation("deleteall", "' + mod + '", "' + postDiv.getAttribute('data-thread') + '", "' + seqno + '", smug.refreshPage)');
         modDeleteAll.innerHTML = '[D+]';
         
-        var modBan = document.createElement('a');
+        let modBan = document.createElement('a');
         modBan.setAttribute('href', '#');
-        modBan.setAttribute('onclick', 'return smug.modOperation("ban", "' + mod + '", "' + postDiv.getAttribute('data-thread') + '", "' + seqNo + '", smug.refreshPage)');
+        modBan.setAttribute('onclick', 'return smug.modOperation("ban", "' + mod + '", "' + postDiv.getAttribute('data-thread') + '", "' + seqno + '", smug.refreshPage)');
         modBan.innerHTML = '[B]';
         
-        var modBanDelete = document.createElement('a');
+        let modBanDelete = document.createElement('a');
         modBanDelete.setAttribute('href', '#');
-        modBanDelete.setAttribute('onclick', 'return smug.modOperation("bandelete", "' + mod + '", "' + postDiv.getAttribute('data-thread') + '", "' + seqNo + '", smug.refreshPage)');
+        modBanDelete.setAttribute('onclick', 'return smug.modOperation("bandelete", "' + mod + '", "' + postDiv.getAttribute('data-thread') + '", "' + seqno + '", smug.refreshPage)');
         modBanDelete.innerHTML = '[B&D]';
         
         modControls.appendChild(modDelete);
@@ -201,348 +204,307 @@ function fillPost(postDiv, postJson, seqNo, timestamp, fromIndex, indexSeqNo, mo
         modControls.appendChild(modBanDelete);
     }
     
-    var postBody = document.createElement('div');
+    let postBody = document.createElement('div');
     if (post.body != null){
         postBody.setAttribute('class', 'body');
-        var postLine = document.createElement('p');
+        let postLine = document.createElement('p');
         postLine.setAttribute('class', 'body-line ltr');
-        postLine.innerHTML = decoratePostBody(post.body, indexSeqNo);
-        //postLine.appendChild(document.createTextNode(decoratePostBody(post.body)));//innerHTML = post.body;//decoratePostBody(document.createTextNode(post.body).data);
-        //postLine.appendChild(document.createTextNode(post.body));
+        postLine.innerHTML = decoratePostBody(post.body, indexSeqno, addressObj);
         postBody.appendChild(postLine);
     }
     
+    postDiv.appendChild(postFullLink);
     postDiv.appendChild(postIntro);
     postDiv.appendChild(postFiles);
     postDiv.appendChild(modControls);
     postDiv.appendChild(postBody);
 }
 
-function fillCatalogPost(postDiv, postJson, seqNo, timestamp, fromIndex, indexSeqNo, mod, flagged, numReplies){
-    var post = JSON.parse(postJson);
+function loadBoard(id, wrappers, addressObj, knownMods, modMode){
+    let threadStub = document.getElementById('thread');
     
-    var postDivInner = postDiv.children[0];//TODO
+    if (!wrappers[id].sLog) {
+        return;
+    }
+        
+    let promises = [];
+    for (let item of wrappers[id].sLog){
+        if ((!modMode && item.removed) || !(item.data && item.data.payload && item.data.payload.data && item.data.payload.data.thread)){
+            continue;
+        }
+        
+        let threadDiv = document.createElement('div');
+        threadDiv.setAttribute('id', item.address);
+        threadStub.appendChild(threadDiv);
+        
+        let threadId = item.data.payload.data.thread.address;
+        promises.push(
+            wrapperFuncs.pullWrapperStub(threadId, wrappers).then(() => {
+                if (wrappers[threadId].last.data.info.mode !== 'thread'){
+                    return Promise.reject('Item ' + threadId + ' is not a valid thread.');
+                } else {
+                    let promisesInner = [];
+                    promisesInner.push(slog.getSLogObj(wrappers[threadId].last.data.info.op));
+                    promisesInner.push(slog.updateSLog(wrappers[threadId].sLog, wrappers[threadId].last.data.head, 3));
+                    return Promise.all(promisesInner);
+                }
+            }).then(values => {
+                let sLog = [];
+                if (values[1][0].data.seqno !== 1){
+                    sLog.push(values[0]);
+                }
+                sLog = sLog.concat(values[1]);
+                wrappers[threadId].sLog = sLog;
+                
+                return loadThread(threadDiv, threadId, wrappers, addressObj, knownMods, modMode, true, item.data.seqno);
+            })
+        );
+    }
+    return Promise.all(promises);
+}
+
+function loadCatalog(id, wrappers, addressObj, knownMods){
+
+}
+
+function loadThread(threadDiv, id, wrappers, addressObj, knownMods, modMode, fromIndex, indexSeqno){
+    for (let mod of knownMods){
+        slog.subtractSLog(wrappers[id].sLog, wrappers[mod].sLog);
+    }
     
-    var imageLink = document.createElement('a');
-    if (post.files != null && post.files.length > 0){
-        if (post.files[0].address != null && post.files[0].size != null){
-            imageLink.setAttribute('href', functions.getNewHash(window.addressParsed, ['post', 'reply', 'catalog'], indexSeqNo));
-            var fileImg = document.createElement('img');
-            if (browserDisplayableFormats.indexOf(post.files[0].extension) != -1) {
-                fileImg.setAttribute('src', post.files[0].address);
-            } else {
-                fileImg.setAttribute('src', '/ipfs/QmSmVimunQTsmau3SH9ohESmzRNLCdXGjSHYpxvp9SeZp2');
-            }
-            fileImg.setAttribute('class', 'thread-image');
-            imageLink.appendChild(fileImg);
+    if (wrappers[id].sLog.length < 1 || wrappers[id].sLog[0].data.seqno !== 1){//OP was deleted, nothing to do
+        return;
+    }
+
+    if (threadDiv == null) {
+        threadDiv = document.getElementById('thread');
+    }
+    
+    let promises = [];
+    for (let item of wrappers[id].sLog){
+        if ((!modMode && item.removed) || !(item.data && item.data.payload && item.data.payload.data && item.data.payload.data.post)){
+            continue;
+        }
+        
+        if (document.getElementById(item.address)){
+            //post already exists
+            continue;
+        }
+        
+        //TODO if (document.getElementById(item.address) && item.removed) - post deleted by a mod, grey it out
+        
+        let postDiv = document.createElement('div');
+        postDiv.setAttribute('id', item.address);
+        threadDiv.appendChild(postDiv);
+        
+        promises.push(
+            slog.getSLogObj(item.data.payload.data.post).then(post => {
+                fillPost(postDiv, post.data, item.data.seqno, item.data.timestamp, addressObj, fromIndex, indexSeqno, modMode, item.removed);
+                threadDiv.insertBefore(document.createElement('br'), postDiv.nextSibling);
+                return;
+            })
+        );
+    }
+    
+    if (fromIndex) {
+        threadDiv.appendChild(document.createElement('hr'));
+    }
+    
+    return Promise.all(promises);
+}
+
+function setTemplateHTML(){
+    let htmlHeadContent = pageHtml.css;
+    htmlHeadContent += pageHtml.favicon;
+    let htmlBodyContent = pageHtml.boardlist;
+    //htmlBodyContent += pageHtml.loadIndicator;
+    //htmlBodyContent += pageHtml.header
+    
+    document.head.innerHTML = htmlHeadContent;
+    document.body.innerHTML = htmlBodyContent;
+}
+
+function setHeader(wrappers, addressObj){
+    let title = null;
+    let uri = null;
+    let fromSite = false;
+    for (let item of addressObj){
+        if (item.mode === 'site'){
+            title = wrappers[item.actualAddress].last.data.info.title;
+            fromSite = true;
         }
     }
-    
-    var replies = document.createElement('div');
-    replies.setAttribute('class', 'replies');
-    replies.innerHTML = '<strong>R: ' + numReplies + '</strong>';
-    
-    var postIntro = document.createElement('p');
-    postIntro.setAttribute('class', 'intro');
-    if (post.subject != null && post.subject != ''){
-        var subjectSpan = document.createElement('span');
-        subjectSpan.setAttribute('class', 'subject');
-        subjectSpan.appendChild(document.createTextNode(post.subject));
-        postIntro.appendChild(subjectSpan);
+    for (let item of addressObj){
+        if (item.mode === 'board'){
+            title = wrappers[item.actualAddress].last.data.info.title;
+            uri = item.publicAddress;
+            fromSite = false;
+        }
     }
-    
-    var postLine = document.createElement('p');
-    postLine.setAttribute('class', 'body-line ltr');
-    if (post.body != null){
-        postLine.innerHTML = decoratePostBody(post.body, indexSeqNo);
-    }
-    
-    postDivInner.appendChild(imageLink);
-    postDivInner.appendChild(replies);
-    postDivInner.appendChild(postIntro);
-    postDivInner.appendChild(postLine);
-    
+    setTitle(title, uri, fromSite);
 }
 
-function appendPostDiv(threadDiv, anchor){
-    var postDiv = document.createElement('div');
-    
-    if (anchor != null){
-        //let index = Array.prototype.indexOf.call(threadDiv.childNodes, anchor);
-        //threadDiv.insertBefore(postDiv, threadDiv.childNodes[index].nextSibling);
-        //threadDiv.insertBefore(document.createElement('br'), threadDiv.childNodes[index].nextSibling);//TODO work out why i thought this was a good idea to begin with
-        
-        threadDiv.appendChild(postDiv);
-        threadDiv.appendChild(document.createElement('br'));
-    } else {
-        //threadDiv.appendChild(document.createElement('br'));
-        threadDiv.appendChild(postDiv);
-        threadDiv.appendChild(document.createElement('br'));
+function setNavLinks(inThread, addressObj){
+    if (inThread){
+        document.getElementById('thread-return').setAttribute('href', functions.getNewHash(addressObj, ['thread', 'post']));
     }
-    return postDiv;
+    document.getElementById('catalog-link').setAttribute('href', functions.getNewHash(addressObj, ['post', 'thread', 'catalog'], ['catalog']));
+    document.getElementById('index-link').setAttribute('href', functions.getNewHash(addressObj, ['post', 'thread', 'catalog']));
 }
 
-function setTitle(indexUrl, indexName){
+function setPostFormData(id){
+    //if (item.mode === 'board' || item.mode === 'thread') {
+    document.getElementById('submit').setAttribute('onclick', 'smug.submitPost("' + id + '", smug.wrappers, "postform")');
+}
+
+function setTitle(title, uri, fromSite){
     document.getElementById('heading').innerHTML = '';
-    if (indexUrl != null) {
-        document.getElementById('heading').appendChild(document.createTextNode('/' + indexUrl + '/ - ' + indexName));
-    } else if (indexName != null) {
-        document.getElementById('heading').appendChild(document.createTextNode('[Detached Board] - ' + indexName));
-    } //TODO this stopped working
-    else {
+    if (uri != null && title != null) {
+        document.getElementById('heading').appendChild(document.createTextNode('/' + uri + '/ - ' + title));
+    } else if (title != null) {
+        if (fromSite) {
+            document.getElementById('heading').appendChild(document.createTextNode(title));
+        } else {
+            document.getElementById('heading').appendChild(document.createTextNode('[Detached Board] - ' + title));
+        }
+    } else {
         document.getElementById('heading').appendChild(document.createTextNode('[Detached Thread]'));
     }
 }
 
-function fillBoardlist(pageStatus){
-    //let addressComponents = functions.parseLocationAddress(location.hash);
-    let siteRootAddress = null;
-    let sitePublicAddress = null;
-    for (let item of window.addressParsed){
-        if (item.mode == 'site'){
-            siteRootAddress = item.actualAddress;
-            sitePublicAddress = item.publicAddress;
-            break;
-        }
-    }
+function setSiteHTML(){
+    document.body.innerHTML += pageHtml.siteBoardlistHeader;
+    document.body.innerHTML += pageHtml.siteBoardlist;
     
-    if (siteRootAddress && pageStatus[siteRootAddress]){
-        let linkHome = document.getElementById('boardlist-home');
-        linkHome.setAttribute('href', '#' + sitePublicAddress);
-        
-        let linkCreate = document.getElementById('boardlist-create');
-        linkCreate.setAttribute('href', '#' + sitePublicAddress + '/create');
-        
-        let linkOptions = document.getElementById('boardlist-options');
-        linkOptions.setAttribute('href', '#' + sitePublicAddress + '/options');
-        
-        let linkManage = document.getElementById('boardlist-manage');
-        linkManage.setAttribute('href', '#' + sitePublicAddress + '/manage');
-        
-        let payloads = slog.calculateSLogPayloads(pageStatus[siteRootAddress].sLog);
-        let boards = document.getElementById('boardlist-boards');
-        if (payloads.length > 0) {
-            boards.innerHTML = ' [';
-        }
-        let firstBoard = true;
-        for (let item of payloads){
-            boards.innerHTML += firstBoard ? ' ' : ' / ';
-            firstBoard = false;
-            
-            let link = document.createElement('a');
-            link.setAttribute('href', '#' + sitePublicAddress + '/' + item.data.uri);
-            link.appendChild(document.createTextNode(item.data.uri));
-            boards.appendChild(link);
-        }
-        if (payloads.length > 0) {
-            boards.innerHTML += ' ] ';
-        }
-    }
+    //TODO hide load indicator
+    
 }
 
-function setThreadHTML(){
-    var htmlHeadContent = pageHtml.css;
-    htmlHeadContent += pageHtml.favicon;
-    var htmlBodyContent = '';
-    htmlBodyContent += pageHtml.boardlist;
-    htmlBodyContent += pageHtml.header;
-    htmlBodyContent += pageHtml.banner;
-    htmlBodyContent += pageHtml.uploadForm;
-    htmlBodyContent += '<hr>'; //TODO html really shouldn't be in here
-    htmlBodyContent += pageHtml.threadStub;
-    htmlBodyContent += pageHtml.threadControls;
-    htmlBodyContent += '<br><br><br>';
-
-    document.head.innerHTML = htmlHeadContent;
-    document.body.innerHTML = htmlBodyContent;
-}
-
-function setIndexHTML(){
-    var htmlHeadContent = pageHtml.css;
-    htmlHeadContent += pageHtml.favicon;
-    var htmlBodyContent = '';
-    htmlBodyContent += pageHtml.boardlist;
-    htmlBodyContent += pageHtml.header;
-    htmlBodyContent += pageHtml.uploadForm;
-    htmlBodyContent += pageHtml.threadStub;
-    htmlBodyContent += '<br><br><br>';
-
-    document.head.innerHTML = htmlHeadContent;
-    document.body.innerHTML = htmlBodyContent;
+function setBoardHTML(){
+    document.body.innerHTML += pageHtml.header;
+    document.body.innerHTML += pageHtml.banner;
+    document.body.innerHTML += pageHtml.uploadForm;
+    document.body.innerHTML += pageHtml.threadStub;
     document.getElementById('submit').innerHTML = 'New Thread';
+    
 }
 
 function setCatalogHTML(){
-    var htmlHeadContent = pageHtml.css;
-    htmlHeadContent += pageHtml.favicon;
-    var htmlBodyContent = '';
-    htmlBodyContent += pageHtml.boardlist;
-    htmlBodyContent += pageHtml.header;
-    htmlBodyContent += pageHtml.uploadForm;
-    htmlBodyContent += pageHtml.catalogStub;
-    htmlBodyContent += '<br><br><br>';
-
-    document.head.innerHTML = htmlHeadContent;
-    document.body.innerHTML = htmlBodyContent;
+    document.body.innerHTML += pageHtml.header;
+    document.body.innerHTML += pageHtml.banner;
+    document.body.innerHTML += pageHtml.uploadForm;
+    document.body.innerHTML += pageHtml.catalogStub;
     document.body.classList.value = 'theme-catalog active-catalog';
     document.getElementById('submit').innerHTML = 'New Thread';
 }
 
-function getCatalogEmptyThread(){
-    var outer = document.createElement('div');
-    outer.setAttribute('class', 'mix');
-    outer.setAttribute('style', 'display: inline-block;');
+function setThreadHTML(){
+    document.body.innerHTML += pageHtml.header;
+    document.body.innerHTML += pageHtml.banner;
+    document.body.innerHTML += pageHtml.uploadForm;
+    document.body.innerHTML += pageHtml.threadStub;
+    document.body.innerHTML += pageHtml.threadControls;
     
-    var inner = document.createElement('div');
-    inner.setAttribute('class', 'thread grid-li grid-size-small');
-    
-    outer.appendChild(inner);
-    
-    return outer;
 }
 
-function setCreationHTML(){
-    var htmlHeadContent = pageHtml.css;
-    htmlHeadContent += pageHtml.favicon;
-    var htmlBodyContent = '';
-    htmlBodyContent += pageHtml.boardlist;
-    
-    htmlBodyContent += pageHtml.siteModCreateHeader;
-    htmlBodyContent += pageHtml.siteModCreateForm;
-        
-    htmlBodyContent += pageHtml.siteBoardCreateHeader;
-    htmlBodyContent += pageHtml.siteBoardCreateForm;
-    
-    htmlBodyContent += pageHtml.siteAddHeader;
-    htmlBodyContent += pageHtml.siteAddForm;
-    
-    document.head.innerHTML = htmlHeadContent;
-    document.body.innerHTML = htmlBodyContent;
-    document.getElementsByName('threadServers[]')[0].value = threadServer;
+function setEditorHTML(){
+    document.body.innerHTML += pageHtml.objectEditorHeader;
 }
 
-function setBoardlistHTML(){
-    var htmlHeadContent = pageHtml.css;
-    htmlHeadContent += pageHtml.favicon;
-    var htmlBodyContent = pageHtml.boardlist;
-    htmlBodyContent += pageHtml.siteBoardlistHeader;
-    htmlBodyContent += pageHtml.siteBoardlist;
-    
-    document.head.innerHTML = htmlHeadContent;
-    document.body.innerHTML = htmlBodyContent;
-}
+function fillBoardlist(sitePublicAddress, siteSLog){
+    document.getElementById('boardlist-home').setAttribute('href', '#' + sitePublicAddress);
+    document.getElementById('boardlist-create').setAttribute('href', '#' + sitePublicAddress + '/create');
+    document.getElementById('boardlist-options').setAttribute('href', '#' + sitePublicAddress + '/options');
+    document.getElementById('boardlist-manage').setAttribute('href', '#' + sitePublicAddress + '/manage');
 
-function setOptionsHTML(){
-    var htmlHeadContent = pageHtml.css;
-    htmlHeadContent += pageHtml.favicon;
-    var htmlBodyContent = pageHtml.boardlist;
-    htmlBodyContent += pageHtml.optionsHeader;
-    htmlBodyContent += pageHtml.optionsForm;
-    
-    document.head.innerHTML = htmlHeadContent;
-    document.body.innerHTML = htmlBodyContent; 
-}
-
-function setManageHTML(){
-    var htmlHeadContent = pageHtml.css;
-    htmlHeadContent += pageHtml.favicon;
-    var htmlBodyContent = pageHtml.boardlist;
-    htmlBodyContent += '<h1>Board Management</h1><br>Not done yet, will enable proper modification of board settings and so on.';
-    
-    document.head.innerHTML = htmlHeadContent;
-    document.body.innerHTML = htmlBodyContent; 
-}
-
-function setNewBoardAddress(address){
-    document.getElementById('board-register-address').value = slog.lastItemFromAddress(address);
-}
-
-function setNewModAddress(address){
-    document.getElementById('mod-register-address').value = slog.lastItemFromAddress(address);
-}
-
-function fillBoardlistTable(pageStatus){
-    let siteRootAddress = null;
-    let sitePublicAddress = null;
-    for (let item of window.addressParsed){
-        if (item.mode == 'site'){
-            siteRootAddress = item.actualAddress;
-            sitePublicAddress = item.publicAddress;
-            break;
+    let items = [];
+    for (let entry of siteSLog){
+        if (!entry.removed && entry.data && entry.data.payload && entry.data.payload.data && entry.data.payload.data.uri){
+            items.push(entry.data.payload.data.uri);
         }
     }
     
-    if (siteRootAddress && pageStatus[siteRootAddress]){
-        let payloads = slog.calculateSLogPayloads(pageStatus[siteRootAddress].sLog);
-        let boardTable = document.getElementById('boardlist-table');
+    let firstBoard = true;
+    let boards = document.getElementById('boardlist-boards');
+    boards.innerHTML = ' [';
+    for (let item of items){
+        boards.innerHTML += firstBoard ? ' ' : ' / ';
+        firstBoard = false;
         
-        let headBoard = document.createElement('th');
-        headBoard.appendChild(document.createTextNode('Board'));
-        let headTitle = document.createElement('th');
-        headTitle.appendChild(document.createTextNode('Title'));
-        let headAddress = document.createElement('th');
-        headAddress.appendChild(document.createTextNode('Address'));
-        
-        let headRow = document.createElement('tr');
-        headRow.appendChild(headBoard);
-        headRow.appendChild(headTitle);
-        headRow.appendChild(headAddress);
-        boardTable.appendChild(headRow);
-                
-        for (let item of payloads){
-            if (item.data != null && item.data.uri != null && item.data.address != null){
-                let uri = document.createElement('td');
-                let title = document.createElement('td');
-                let address = document.createElement('td');
-                
-                //functions.fillIndexTitle(item.data.address, title);
-                
-                sio.getJsonObjFromAPI(item.data.address, function(indexRaw){
-                    let indexObj = JSON.parse(indexRaw);
-                    if (indexObj.settings != null){
-                        sio.getJsonObjFromAPI(indexObj.settings, function(settingsRaw){
-                            let settingsObj = JSON.parse(settingsRaw);
-                            if (settingsObj.title != null){
-                                title.appendChild(document.createTextNode(settingsObj.title));
-                            }
-                        });
-                    }
-                });
-                
-                let link = document.createElement('a');
-                link.setAttribute('href', '#' + sitePublicAddress + '/' + item.data.uri);
-                link.appendChild(document.createTextNode('/' + item.data.uri + '/'));
-                uri.appendChild(link);
-                
-                let rawLink = document.createElement('a');
-                rawLink.setAttribute('href', '#' + item.data.address);
-                rawLink.appendChild(document.createTextNode(item.data.address));
-                address.appendChild(rawLink);
-                
-                let row = document.createElement('tr');
-                row.appendChild(uri);
-                row.appendChild(title);
-                row.appendChild(address);
-                boardTable.appendChild(row);
-            }
-        }
+        let link = document.createElement('a');
+        link.setAttribute('href', '#' + sitePublicAddress + '/' + item);
+        link.appendChild(document.createTextNode(item));
+        boards.appendChild(link);
     }
+    boards.innerHTML += ' ]';
 }
 
-module.exports.fillPost = fillPost;
-module.exports.fillCatalogPost = fillCatalogPost;
-module.exports.appendPostDiv = appendPostDiv;
+function fillBoardlistTable(sitePublicAddress, id, wrappers){
+    let boardTable = document.getElementById('boardlist-table');
+    
+    let headBoard = document.createElement('th');
+    headBoard.appendChild(document.createTextNode('Board'));
+    let headTitle = document.createElement('th');
+    headTitle.appendChild(document.createTextNode('Title'));
+    let headAddress = document.createElement('th');
+    headAddress.appendChild(document.createTextNode('Address'));
+    
+    let headRow = document.createElement('tr');
+    headRow.appendChild(headBoard);
+    headRow.appendChild(headTitle);
+    headRow.appendChild(headAddress);
+    boardTable.appendChild(headRow);
+    
+    let payloads = [];
+    for (let entry of wrappers[id].sLog){
+        if (!entry.removed && entry.data && entry.data.payload && entry.data.payload.data && entry.data.payload.data.address){
+            payloads.push(entry.data.payload);
+        }
+    }
+    
+    let promises = [];
+    for (let payload of payloads){
+        let uri = document.createElement('td');
+        let title = document.createElement('td');
+        let address = document.createElement('td');
+        
+        let link = document.createElement('a');
+        link.setAttribute('href', '#' + sitePublicAddress + '/' + payload.data.uri);
+        link.appendChild(document.createTextNode('/' + payload.data.uri + '/'));
+        uri.appendChild(link);
+
+        let rawLink = document.createElement('a');
+        rawLink.setAttribute('href', '#' + payload.data.address);
+        rawLink.appendChild(document.createTextNode(payload.data.address));
+        address.appendChild(rawLink);
+
+        let row = document.createElement('tr');
+        row.appendChild(uri);
+        row.appendChild(title);
+        row.appendChild(address);
+        boardTable.appendChild(row);
+        
+        promises.push(
+            wrapperFuncs.pullWrapperStub(payload.data.address, wrappers).then(() => {
+                title.appendChild(document.createTextNode(wrappers[payload.data.address].last.data.info.title));
+                return;
+            })
+        );
+    }
+    return Promise.all(promises);
+}
+module.exports.setSiteHTML = setSiteHTML;
+module.exports.setBoardHTML = setBoardHTML;
+module.exports.setCatalogHTML = setCatalogHTML;
+module.exports.setThreadHTML = setThreadHTML;
+module.exports.setEditorHTML = setEditorHTML;
+module.exports.loadBoard = loadBoard;
+module.exports.loadCatalog = loadCatalog;
+module.exports.loadThread = loadThread;
+module.exports.setTemplateHTML = setTemplateHTML;
+module.exports.setHeader = setHeader;
+module.exports.setNavLinks = setNavLinks;
+module.exports.setPostFormData = setPostFormData;
 module.exports.setTitle = setTitle;
 module.exports.fillBoardlist = fillBoardlist;
-module.exports.setThreadHTML = setThreadHTML;
-module.exports.setIndexHTML = setIndexHTML;
-module.exports.setCatalogHTML = setCatalogHTML;
-module.exports.getCatalogEmptyThread = getCatalogEmptyThread;
-module.exports.setCreationHTML = setCreationHTML;
-module.exports.setBoardlistHTML = setBoardlistHTML;
-module.exports.setOptionsHTML = setOptionsHTML;
-module.exports.setManageHTML = setManageHTML;
-module.exports.setNewBoardAddress = setNewBoardAddress;
-module.exports.setNewModAddress = setNewModAddress;
 module.exports.fillBoardlistTable = fillBoardlistTable;
-

@@ -1,12 +1,13 @@
 var express = require('express');
 var cors = require('cors');
 var multer  = require('multer');
-var pem = require('pem');
-var https = require('https');
-var fs = require('fs');
+//var pem = require('pem');
+//var https = require('https');
+//var fs = require('fs');
 
 var upload = multer();
-var sio = require('../common/sio.js');
+//var sio = require('../common/sio.js');
+var storage = require('../common/storage.js');
 
 var app = express();
 
@@ -22,9 +23,9 @@ app.post('/', upload.fields([]), function (req, res) {//TODO get rid of the damn
     
     if (req.body != null){
         if (req.body.address != null && req.body.association != null && req.body.password != null){
-            if (req.body.password == sitePassword){
+            if (req.body.password === sitePassword){
                 bindings[req.body.address] = req.body.association;
-                sio.saveObjectAsync('bindings.json', bindings);
+                storage.saveObject('bindings.json', bindings).then(console.log).catch(console.error);
                 res.send('Name successfully registered.');
             } else {
                 res.status(400).send('Wrong password.');
@@ -53,10 +54,11 @@ app.get('/', upload.fields([]), function (req, res) {
     }
 });
 
-bindings = sio.loadObjectIfExists('bindings.json');
-if (!bindings) {
+bindings = storage.loadObjectIfExists('bindings.json').then(result => {
+    bindings = result;
+}).catch(() => {
     bindings = {};
-}
+});
 
 var listener = app.listen(port, function(){
     console.log('Now listening on port ' + listener.address().port);

@@ -25,4 +25,4 @@ ipfs config --json API.HTTPHeaders.Access-Control-Allow-Origin "[\"*\"]"
 ipfs config --json API.HTTPHeaders.Access-Control-Allow-Credentials "[\"true\"]"
 ipfs config --json API.HTTPHeaders.Access-Control-Allow-Methods "[\"PUT\", \"POST\", \"GET\"]"
 ```
-beforehand. Then, simply visit the link as output by setup.sh.
+beforehand. Then, simply visit the link as output by setup.sh. Make sure to restart the daemon after updating the configuration.

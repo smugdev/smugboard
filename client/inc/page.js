@@ -1,4 +1,4 @@
-var pageHtml = require('./page_html.js');
+var pageHtml = require('./pagehtml.js');
 var functions = require('./functions.js');
 var wrapperFuncs = require('../../common/wrapperfuncs.js');
 var slog = require('../../common/slog.js');
@@ -220,6 +220,104 @@ function fillPost(postDiv, post, seqno, timestamp, addressObj, viewingFromIndex,
     postDiv.appendChild(postBody);
 }
 
+function getCatalogEmptyThread(){//TODO replace with line in page_html.js
+    var outer = document.createElement('div');
+    outer.setAttribute('class', 'mix');
+    outer.setAttribute('style', 'display: inline-block;');
+    
+    var inner = document.createElement('div');
+    inner.setAttribute('class', 'thread grid-li grid-size-small');
+    
+    outer.appendChild(inner);
+    
+    return outer;
+}
+
+function loadCatalog(id, wrappers, addressObj, knownMods){
+    var threadStub = document.getElementById('Grid');
+    
+    if (!wrappers[id].sLog) {
+        return;
+    }
+    
+    let promises = [];
+    for (let item of wrappers[id].sLog){
+        if ((!modMode && item.removed) || !(item.data && item.data.payload && item.data.payload.data && item.data.payload.data.thread)){
+            continue;
+        }
+        let threadDiv = getCatalogEmptyThread();
+        threadDiv.setAttribute('id', item.address);
+        threadStub.appendChild(threadDiv);
+        
+        let threadId = item.data.payload.data.thread.address;
+        promises.push(
+            wrapperFuncs.pullWrapperStub(threadId, wrappers).then(() => {
+                if (wrappers[threadId].last.data.info.mode !== 'thread'){
+                    return Promise.reject('Item ' + threadId + ' is not a valid thread.');
+                } else {
+                    return slog.getSLogObj(wrappers[threadId].last.data.info.op);
+                    //let promisesInner = [];
+                    //promisesInner.push(slog.getSLogObj(wrappers[threadId].last.data.info.op));
+                    //promisesInner.push(slog.updateSLog(wrappers[threadId].sLog, wrappers[threadId].last.data.head, 3));
+                    //return Promise.all(promisesInner);
+                }
+            }).then(value => {
+                let sLog = [value];
+                //if (values[1][0].data.seqno !== 1){
+                //sLog.push(value);
+                //}
+                //sLog = sLog.concat(values[1]);
+                wrappers[threadId].sLog = sLog;
+                
+                return loadCatalogStub(threadDiv, threadId, wrappers, addressObj, knownMods, modMode, true, item.data.seqno);
+            })
+        );
+    }
+    return Promise.all(promises);
+}
+
+function loadCatalogStub(threadDiv, id, wrappers, addressObj, knownMods, modMode, fromIndex, indexSeqno){
+    for (let mod of knownMods){
+        slog.subtractSLog(wrappers[id].sLog, wrappers[mod].sLog);
+    }
+    
+    if (wrappers[id].sLog.length < 1 || wrappers[id].sLog[0].data.seqno !== 1){//OP was deleted, nothing to do
+        return;
+    }
+    
+    let promises = [];
+    for (let item of wrappers[id].sLog){
+        if ((!modMode && item.removed) || !(item.data && item.data.payload && item.data.payload.data && item.data.payload.data.post)){
+            continue;
+        }
+        
+        if (document.getElementById(item.address)){
+            //post already exists
+            continue;
+        }
+        
+        //TODO if (document.getElementById(item.address) && item.removed) - post deleted by a mod, grey it out
+        
+        let postDiv = document.createElement('div');
+        postDiv.setAttribute('id', item.address);
+        threadDiv.appendChild(postDiv);
+        
+        promises.push(
+            slog.getSLogObj(item.data.payload.data.post).then(post => {
+                fillPost(postDiv, post.data, item.data.seqno, item.data.timestamp, addressObj, fromIndex, indexSeqno, modMode, item.removed);
+                threadDiv.insertBefore(document.createElement('br'), postDiv.nextSibling);
+                return;
+            })
+        );
+    }
+    
+    if (fromIndex) {
+        threadDiv.appendChild(document.createElement('hr'));
+    }
+    
+    return Promise.all(promises);
+}
+
 function loadBoard(id, wrappers, addressObj, knownMods, modMode){
     let threadStub = document.getElementById('thread');
     
@@ -261,10 +359,6 @@ function loadBoard(id, wrappers, addressObj, knownMods, modMode){
         );
     }
     return Promise.all(promises);
-}
-
-function loadCatalog(id, wrappers, addressObj, knownMods){
-
 }
 
 function loadThread(threadDiv, id, wrappers, addressObj, knownMods, modMode, fromIndex, indexSeqno){

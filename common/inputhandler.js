@@ -1,9 +1,8 @@
 var sio = require('./sio.js');
 var storage = require('./storage.js');
 var util = require('./util.js');
-var wrapper = require('./wrapperfuncs.js');
+var wrapperFuncs = require('./wrapperfuncs.js');
 
-var globalWrappers = {};
 var serverModes = ['site', 'board', 'thread', 'mod', 'server'];
 
 var formats =  ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'ico', 'webm', 'mp4', 'mp3', 'ogg', 'opus', 'flac', 'apng', 'pdf', 'iso', 'zip', 'tar', 'gz', 'rar', '7z', 'torrent'];
@@ -36,29 +35,29 @@ function isValidRequest(mode, type, password, key, wrappers){
 }
 
 //handler (generic)
-function handleInput(msg, files, sender, serverAddress){
+function handleInput(wrappers, msg, files, sender, serverAddress){
     return new Promise((resolve, reject) => {
-        if (isValidRequest(msg.mode, msg.type, msg.password, msg.id, globalWrappers)){
+        if (isValidRequest(msg.mode, msg.type, msg.password, msg.id, wrappers)){
             let wrapperOperation;
             switch(msg.type){
             case 'create':
-                wrapperOperation = wrapper.createObj(msg, globalWrappers, serverAddress);
+                wrapperOperation = wrapperFuncs.createObj(msg, wrappers, serverAddress);
                 break;
             case 'add':
-                wrapperOperation = wrapper.addToObj(msg, globalWrappers, files, formats, previewable);
+                wrapperOperation = wrapperFuncs.addToObj(msg, wrappers, files, formats, previewable);
                 break;
             case 'remove':
-                wrapperOperation = wrapper.removeFromObj(msg, globalWrappers);
+                wrapperOperation = wrapperFuncs.removeFromObj(msg, wrappers);
                 break;
             case 'set':
-                wrapperOperation = wrapper.setObj(msg, globalWrappers, serverAddress);
+                wrapperOperation = wrapperFuncs.setObj(msg, wrappers, serverAddress);
                 break;
             case 'delete':
-                wrapperOperation = wrapper.deleteObj(msg, globalWrappers);
+                wrapperOperation = wrapperFuncs.deleteObj(msg, wrappers);
             }
             
             wrapperOperation.then(resp => {
-                storage.saveWrappers(util.prepareStorageKeys(globalWrappers)); //TODO put this somewhere else
+                storage.saveWrappers(util.prepareStorageKeys(wrappers)); //TODO put this somewhere else
                 resolve(resp);
             }).catch(reject);
         } else {
@@ -67,38 +66,38 @@ function handleInput(msg, files, sender, serverAddress){
     });
 }
 
-function setupServer(){
+function setupServer(wrappers){
     return Promise.all([storage.getWrappers(), sio.getKeys()]).then((values) => {
-        globalWrappers = util.rebuildKeys(values[0], values[1]);
+        wrappers = util.rebuildKeys(values[0], values[1]);
         
         /*console.log('Test point A');
-        console.log(globalWrappers);
+        console.log(wrappers);
         let board;
         handleInput({mode: 'board', type: 'create', password: 'fugg', title: 'My Shitpoos', formats: ['png', 'jpg'], mods: []}, [null], 'hurr', 'http://localhost').then(obj => {
             console.log('Test point B');
             console.log(obj);
             board = obj.result;
-            console.log(globalWrappers);
+            console.log(wrappers);
             return handleInput({mode: 'thread', type: 'create', password: 'fugg', title: 'My Shitthread'}, [null], 'hurr', 'http://localhost');
         }).then(obj => {
             console.log('Test point C');
             console.log(obj);
-            console.log(globalWrappers);
+            console.log(wrappers);
             return handleInput({mode: 'board', type: 'add', id: board, password: 'fugg', newaddress: obj.result}, [null], 'hurr', 'http://localhost');
         }).then(obj => {
             console.log('Test point D');
             console.log(obj);
-            console.log(globalWrappers);
+            console.log(wrappers);
             return handleInput({mode: 'board', type: 'add', id: board, password: 'fugg', newaddress: obj.result}, [null], 'hurr', 'http://localhost');
         }).then(obj => {
             console.log('Test point E');
             console.log(obj);
-            console.log(globalWrappers);
+            console.log(wrappers);
             return handleInput({mode: 'board', type: 'add', id: board, password: 'fugg', newaddress: obj.result}, [null], 'hurr', 'http://localhost');
         }).then(obj => {
             console.log('Test point F');
             console.log(obj);
-            console.log(globalWrappers);
+            console.log(wrappers);
         }).catch(console.error);*/
         
         /*var server;

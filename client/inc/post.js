@@ -2,34 +2,25 @@ var wrapperFuncs = require('../../common/wrapperfuncs.js');
 var util = require('../../common/util.js');
 //var sio = require('../../common/sio.js');
 var controller = require('./controller.js');
-
-function sendToServer(serverId, wrappers, formData){
-    return new Promise((resolve, reject) => {
-        wrapperFuncs.getServerConn(serverId, wrappers).then(conn => {
-            let req = new XMLHttpRequest();//TODO try transitioning this to the xhr library, don't know if doable with files
-            req.onreadystatechange = () => {
-                if (req.readyState === XMLHttpRequest.DONE) {
-                    resolve(req.responseText);
-                }
-            };
-            req.addEventListener('error', err => {
-                reject(err);
-            });
-            req.open('POST', conn.ip);
-            req.send(formData);
-        }).catch(reject);
-    });
-}
+var bridge = require('./serverbridge.js');
 
 function submitPost(wrapperId, wrappers, formName){
     
     //TODO grey out the button
     let formData = new FormData(document.getElementById(formName));
-    if (formData.get('author') === '') {
-        formData.set('author', 'Anonymous');
+    let formKeys = formData.keys();
+    let postData = {};
+    
+    for (let key of formKeys){
+        postData[key] = formData.get(key);
     }
-    formData.set('type', 'add');
-        
+
+
+    if (postData.author === '') {
+        postData.author = 'Anonymous';
+    }
+    postData.type = 'add';
+
     Promise.resolve().then(() => {
         if (!wrappers[wrapperId]){
             return wrapperFuncs.pullWrapperStub(wrapperId, wrappers);
@@ -45,26 +36,28 @@ function submitPost(wrapperId, wrappers, formName){
             if (wrappers[wrapperId].last.data.info.threadservers && wrappers[wrapperId].last.data.info.threadservers.length > 0){
                 //create a new thread
                 let chosenServer = wrappers[wrapperId].last.data.info.threadservers[Math.floor(Math.random() * wrappers[wrapperId].last.data.info.threadservers.length)];
-                let threadForm = new FormData();
-                threadForm.set('mode', 'thread');
-                threadForm.set('type', 'create');
-                threadForm.set('id', chosenServer);
-                threadForm.set('server', chosenServer);
+                let threadData = {
+                    mode: 'thread',
+                    type: 'create',
+                    id: chosenServer,
+                    server: chosenServer
+                };
                 
-                return sendToServer(chosenServer, wrappers, threadForm).then(threadAddress => {
+                return bridge.sendToServer(chosenServer, wrappers, threadData).then(threadAddress => {
                     let promises = [];
                     //post to that thread
-                    formData.set('mode', 'thread');
-                    formData.set('id', threadAddress);
-                    promises.push(sendToServer(threadAddress, wrappers, formData));
+                    postData.mode = 'thread';
+                    postData.id = threadAddress;
+                    promises.push(bridge.sendToServer(threadAddress, wrappers, postData));
                     
                     //simultaneously, add that thread to the board in question
-                    let boardForm = new FormData();
-                    boardForm.set('mode', 'board');
-                    boardForm.set('type', 'add');
-                    boardForm.set('id', wrapperId);
-                    boardForm.set('newaddress', threadAddress);
-                    promises.push(sendToServer(wrapperId, wrappers, boardForm));
+                    let boardData = {
+                        mode: 'board',
+                        type: 'add',
+                        id: wrapperId,
+                        newaddress: threadAddress
+                    };
+                    promises.push(bridge.sendToServer(wrapperId, wrappers, boardData));
                     
                     Promise.all(promises).then(values => {
                         return values;
@@ -78,9 +71,9 @@ function submitPost(wrapperId, wrappers, formName){
             if (!wrappers[wrapperId].last.data.info.server){
                 Promise.reject('No server found.');
             } else {
-                formData.set('mode', wrappers[wrapperId].last.data.info.mode);
-                formData.set('id', wrapperId);
-                return sendToServer(wrappers[wrapperId].last.data.info.server, wrappers, formData).then(result => {
+                postData.mode = wrappers[wrapperId].last.data.info.mode;
+                postData.id = wrapperId;
+                return bridge.sendToServer(wrappers[wrapperId].last.data.info.server, wrappers, postData).then(result => {
                     controller.queueRefresh();
                     return result;
                 });

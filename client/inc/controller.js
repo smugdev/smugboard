@@ -2,7 +2,7 @@ var slog = require('../../common/slog.js');
 var page = require('./page.js');
 var functions = require('./functions.js');
 var wrapperFuncs = require('../../common/wrapperfuncs.js');
-var handler = require('../../common/inputhandler.js');
+//var handler = require('../../common/inputhandler.js');
 
 var secondsLeft = 30;
 var pendingRefresh = false;

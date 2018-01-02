@@ -60,3 +60,11 @@ typings/
 # ipfs repo
 .ipfs/
 
+# logs
+nameserver/log.txt
+server/log.txt
+
+# locks
+common/package-lock.json
+nameserver/package-lock.json
+server/package-lock.json

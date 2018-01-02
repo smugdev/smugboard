@@ -1,5 +1,5 @@
 var functions = require('./inc/functions.js');
-//var pageHtml = require('./inc/page_html.js');
+//var pageHtml = require('./inc/pagehtml.js');
 var page = require('./inc/page.js');
 var post = require('./inc/post.js');
 var controller = require('./inc/controller.js');
